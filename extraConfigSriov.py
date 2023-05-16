@@ -21,7 +21,7 @@ class ExtraConfigSriov:
         client = K8sClient(self._cc["kubeconfig"])
         lh = host.LocalHost()
         repo_dir = "/root/sriov-network-operator"
-        url = "https://github.com/bn222/sriov-network-operator"
+        url = "https://github.com/wizhaoredhat/sriov-network-operator"
 
         if os.path.exists(repo_dir):
             shutil.rmtree(repo_dir)
@@ -38,6 +38,8 @@ class ExtraConfigSriov:
             image = cfg["image"]
             print(f"Image {image} provided to load custom sriov-network-operator")
             env["SRIOV_NETWORK_OPERATOR_IMAGE"] = image
+
+        env["SRIOV_NETWORK_CONFIG_DAEMON_IMAGE"] = "quay.io/sdaniele/sriov-network-config-daemon:test_fix_bug_in_bf2"
 
         # cleanup first, to make this script idempotent
         print("running make undeploy")
