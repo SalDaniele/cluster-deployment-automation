@@ -156,14 +156,18 @@ class ExtraConfigSriovOvSHWOL:
         self.render_sriov_node_policy(mgmtPolicyName, managementVFsAll, numVfs, managementResourceName, mgmtPolicyFile)
 
         print(client.oc("create -f manifests/nicmode/sriov-pool-config.yaml"))
-        print(client.oc("create -f " + workloadPolicyFile))
-        print(client.oc("create -f " + mgmtPolicyFile))
-        print(client.oc("create -f manifests/nicmode/nad.yaml"))
         start = time.time()
         time.sleep(60)
         print(client.oc("wait mcp sriov --for condition=updated --timeout=50m"))
         minutes, seconds = divmod(int(time.time() - start), 60)
         print(f"It took {minutes}m {seconds}s to for mcp sriov to update")
+        print(client.oc("create -f " + workloadPolicyFile))
+        print(client.oc("create -f " + mgmtPolicyFile))
+        print(client.oc("create -f manifests/nicmode/nad.yaml"))
+        
+        time.sleep(60)
+        for node in client.get_nodes():
+            client.oc(f"wait node ${node} --for=condition=Ready --timeout=15m")
 
         self.ensure_pci_realloc(client, "sriov")
 
@@ -225,14 +229,19 @@ class ExtraConfigSriovOvSHWOL_NewAPI(ExtraConfigSriovOvSHWOL):
         self.render_sriov_node_policy(mgmtPolicyName, managementVFsAll, numVfs, managementResourceName, mgmtPolicyFile)
 
         print(client.oc("create -f manifests/nicmode/sriov-pool-config.yaml"))
-        print(client.oc("create -f " + workloadPolicyFile))
-        print(client.oc("create -f " + mgmtPolicyFile))
-        print(client.oc("create -f manifests/nicmode/nad.yaml"))
         start = time.time()
         time.sleep(60)
         print(client.oc("wait mcp sriov --for condition=updated --timeout=50m"))
         minutes, seconds = divmod(int(time.time() - start), 60)
         print(f"It took {minutes}m {seconds}s to for mcp sriov to update")
+        print(client.oc("create -f " + workloadPolicyFile))
+        print(client.oc("create -f " + mgmtPolicyFile))
+        print(client.oc("create -f manifests/nicmode/nad.yaml"))
+        
+        time.sleep(60)
+        for node in client.get_nodes():
+            client.oc(f"wait node ${node} --for=condition=Ready --timeout=15m")
+            
 
         mgmtPortResourceName = "openshift.io/" + managementResourceName
         print(f"Creating Config Map for Hardware Offload with resource name {mgmtPortResourceName}")
