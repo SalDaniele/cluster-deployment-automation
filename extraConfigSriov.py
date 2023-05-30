@@ -38,6 +38,8 @@ class ExtraConfigSriov:
             image = cfg["image"]
             print(f"Image {image} provided to load custom sriov-network-operator")
             env["SRIOV_NETWORK_OPERATOR_IMAGE"] = image
+        
+        env["SRIOV_NETWORK_CONFIG_DAEMON_IMAGE"] = "quay.io/sdaniele/sriov-network-config-daemon:test-pciutil-dep"
 
         # cleanup first, to make this script idempotent
         print("running make undeploy")
