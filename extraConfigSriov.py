@@ -157,69 +157,16 @@ class ExtraConfigSriovOvSHWOL:
         mgmtPolicyFile = "/tmp/" + mgmtPolicyName + ".yaml"
         self.render_sriov_node_policy(mgmtPolicyName, managementVFsAll, numVfs, managementResourceName, mgmtPolicyFile)
 
-        #############################
         print(client.oc("create -f manifests/nicmode/sriov-pool-config.yaml"))
+        print(client.oc("create -f " + workloadPolicyFile))
+        print(client.oc("create -f " + mgmtPolicyFile))
+        print(client.oc("create -f manifests/nicmode/nad.yaml"))
         start = time.time()
         time.sleep(60)
         print(client.oc("wait mcp sriov --for condition=updated --timeout=50m"))
         minutes, seconds = divmod(int(time.time() - start), 60)
         print(f"It took {minutes}m {seconds}s to for mcp sriov to update")
-        print("Node / mcp state")
-        print(client.oc("get nodes"))
-        print(client.oc("get mcp"))
 
-
-        #############################
-        print(client.oc("create -f " + workloadPolicyFile))
-        start = time.time()
-        time.sleep(120)
-        print(client.oc("wait mcp sriov --for condition=updated --timeout=50m"))
-        minutes, seconds = divmod(int(time.time() - start), 60)
-        print(f"It took {minutes}m {seconds}s to for workload policy file to update 1st")
-
-        start = time.time()
-        time.sleep(120)
-        print(client.oc("wait mcp sriov --for condition=updated --timeout=50m"))
-        minutes, seconds = divmod(int(time.time() - start), 60)
-        print(f"It took {minutes}m {seconds}s to for workload policy file to update 2nd")
-        print("Node / mcp state")
-        print(client.oc("get nodes"))
-        print(client.oc("get mcp"))
-
-        ##############################
-        print(client.oc("create -f " + mgmtPolicyFile))
-        start = time.time()
-        time.sleep(120)
-        print(client.oc("wait mcp sriov --for condition=updated --timeout=50m"))
-        minutes, seconds = divmod(int(time.time() - start), 60)
-        print(f"It took {minutes}m {seconds}s to for management policy file to update 1st")
-
-        start = time.time()
-        time.sleep(120)
-        print(client.oc("wait mcp sriov --for condition=updated --timeout=50m"))
-        minutes, seconds = divmod(int(time.time() - start), 60)
-        print(f"It took {minutes}m {seconds}s to for management policy file to update 2nd")
-        print("Node / mcp state")
-        print(client.oc("get nodes"))
-        print(client.oc("get mcp"))
-
-        ##############################
-        print(client.oc("create -f manifests/nicmode/nad.yaml"))
-        start = time.time()
-        time.sleep(120)
-        print(client.oc("wait mcp sriov --for condition=updated --timeout=50m"))
-        minutes, seconds = divmod(int(time.time() - start), 60)
-        print(f"It took {minutes}m {seconds}s to for nad to update 1st")
-
-        start = time.time()
-        time.sleep(120)
-        print(client.oc("wait mcp sriov --for condition=updated --timeout=50m"))
-        minutes, seconds = divmod(int(time.time() - start), 60)
-        print(f"It took {minutes}m {seconds}s to for nad to update 2nd")
-        print("Node / mcp state")
-        print(client.oc("get nodes"))
-        print(client.oc("get mcp"))
-        
         self.ensure_pci_realloc(client, "sriov")
 
 # VF Management port requires a new API. We need a new extra config class to handle the API changes.
