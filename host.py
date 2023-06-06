@@ -288,7 +288,7 @@ class RemoteHostWithBF2(RemoteHost):
 
     def bf_firmware_upgrade(self) -> Result:
         print("Upgrading firmware")
-        return self.run_in_container("/fwup -v 24.35.1012")
+        return self.run_in_container("/fwup")
 
     def bf_firmware_defaults(self) -> Result:
         print("Setting firmware config to defaults")
