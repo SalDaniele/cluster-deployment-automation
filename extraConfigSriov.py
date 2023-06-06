@@ -83,7 +83,7 @@ class ExtraConfigSriovOvSHWOL:
             outFile.write(rendered)
         client.oc("create -f /tmp/pci-realloc.yaml")
         print("Waiting for mcp")
-        self.wait_for_mcp(client, mcp_name, "pci-realloc.yaml")
+        client.wait_for_mcp(mcp_name, "pci-realloc.yaml")
 
     def ensure_pci_realloc(self, client: K8sClient, mcp_name: str) -> None:
         if self.need_pci_realloc(client):
@@ -97,18 +97,6 @@ class ExtraConfigSriovOvSHWOL:
 
         with open(outfilename, "w") as outFile:
             outFile.write(rendered)
-
-    def wait_for_mcp(self, client: K8sClient, mcp_name: str, resource: str = "resource"):
-        time.sleep(60)
-        iteration = 1
-        get_status_cmd = "get mcp sriov -o jsonpath='{.status.conditions[?(@.type==\"Updated\")].status}'"
-        while client.oc(get_status_cmd).out != "True":
-            start = time.time()
-            print(client.oc(f"wait mcp {mcp_name} --for condition=updated --timeout=50m"))
-            minutes, seconds = divmod(int(time.time() - start), 60)
-            print(f"It took {minutes}m {seconds}s to for {resource} to be applied (attempt: {iteration})")
-            iteration = iteration + 1
-            time.sleep(60)
 
     def run(self, _, futures: Dict[str, Future]) -> None:
         [f.result() for (_, f) in futures.items()]
@@ -166,13 +154,13 @@ class ExtraConfigSriovOvSHWOL:
         self.render_sriov_node_policy(mgmtPolicyName, managementVFsAll, numVfs, managementResourceName, mgmtPolicyFile)
 
         print(client.oc("create -f manifests/nicmode/sriov-pool-config.yaml"))
-        self.wait_for_mcp(client, "sriov", "sriov-pool-config.yaml")
+        client.wait_for_mcp("sriov", "sriov-pool-config.yaml")
         print(client.oc("create -f " + workloadPolicyFile))
-        self.wait_for_mcp(client, "sriov", "sriov-workload-node-policy.yaml")
+        client.wait_for_mcp("sriov", "sriov-workload-node-policy.yaml")
         print(client.oc("create -f " + mgmtPolicyFile))
-        self.wait_for_mcp(client, "sriov", "sriov-mgmt-node-policy.yaml")
+        client.wait_for_mcp("sriov", "sriov-mgmt-node-policy.yaml")
         print(client.oc("create -f manifests/nicmode/nad.yaml"))
-        self.wait_for_mcp(client, "sriov", "nad.yaml")
+        client.wait_for_mcp("sriov", "nad.yaml")
 
         self.ensure_pci_realloc(client, "sriov")
 
@@ -234,13 +222,13 @@ class ExtraConfigSriovOvSHWOL_NewAPI(ExtraConfigSriovOvSHWOL):
         self.render_sriov_node_policy(mgmtPolicyName, managementVFsAll, numVfs, managementResourceName, mgmtPolicyFile)
 
         print(client.oc("create -f manifests/nicmode/sriov-pool-config.yaml"))
-        self.wait_for_mcp(client, "sriov", "sriov-pool-config.yaml")
+        client.wait_for_mcp("sriov", "sriov-pool-config.yaml")
         print(client.oc("create -f " + workloadPolicyFile))
-        self.wait_for_mcp(client, "sriov", "sriov-workload-node-policy.yaml")
+        client.wait_for_mcp("sriov", "sriov-workload-node-policy.yaml")
         print(client.oc("create -f " + mgmtPolicyFile))
-        self.wait_for_mcp(client, "sriov", "sriov-mgmt-node-policy.yaml")
+        client.wait_for_mcp("sriov", "sriov-mgmt-node-policy.yaml")
         print(client.oc("create -f manifests/nicmode/nad.yaml"))
-        self.wait_for_mcp(client, "sriov", "nad.yaml")
+        client.wait_for_mcp("sriov", "nad.yaml")
 
         mgmtPortResourceName = "openshift.io/" + managementResourceName
         print(f"Creating Config Map for Hardware Offload with resource name {mgmtPortResourceName}")

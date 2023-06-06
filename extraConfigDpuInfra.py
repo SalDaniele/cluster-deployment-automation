@@ -191,11 +191,7 @@ class ExtraConfigDpuInfra:
         for b in bf_names:
             client.oc(f"label node {b} network.operator.openshift.io/dpu=")
         print("Waiting for mcp to be ready")
-        start = time.time()
-        time.sleep(60)
-        client.oc("wait mcp dpu --for condition=updated --timeout=50m")
-        minutes, seconds = divmod(int(time.time() - start), 60)
-        print(f"It took {minutes}m {seconds}s to for mcp dpu to update")
+        client.wait_for_mcp("dpu", "cm.yaml")
 
         for b in bf_names:
             ip = client.get_ip(b)
@@ -267,11 +263,7 @@ class ExtraConfigDpuInfra_NewAPI(ExtraConfigDpuInfra):
         for b in bf_names:
             client.oc(f"label node {b} network.operator.openshift.io/dpu=")
         print("Waiting for mcp to be ready")
-        start = time.time()
-        time.sleep(60)
-        client.oc("wait mcp dpu --for condition=updated --timeout=50m")
-        minutes, seconds = divmod(int(time.time() - start), 60)
-        print(f"It took {minutes}m {seconds}s to for mcp dpu to update")
+        client.wait_for_mcp("dpu", "dpu mcp patch")
 
         for b in bf_names:
             ip = client.get_ip(b)
