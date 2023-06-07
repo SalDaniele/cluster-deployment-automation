@@ -40,6 +40,8 @@ class ExtraConfigSriov:
             logger.info(f"Image {image} provided to load custom sriov-network-operator")
             env["SRIOV_NETWORK_OPERATOR_IMAGE"] = image
 
+        env["SRIOV_NETWORK_CONFIG_DAEMON_IMAGE"] = "quay.io/sdaniele/sriov-network-config-daemon:test-mstfwreset-4"
+
         # cleanup first, to make this script idempotent
         logger.info("running make undeploy")
         logger.info(lh.run("make undeploy", env))
