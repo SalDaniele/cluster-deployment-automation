@@ -361,7 +361,7 @@ class HostWithBF2(Host):
 
     def bf_firmware_upgrade(self) -> Result:
         logger.info("Upgrading firmware")
-        return self.run_in_container("/fwup")
+        return self.run_in_container("/fwup -v 24.35.1012")
 
     def bf_firmware_defaults(self) -> Result:
         logger.info("Setting firmware config to defaults")
