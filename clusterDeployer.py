@@ -568,7 +568,7 @@ class ClusterDeployer:
         cfg["additional_ntp_source"] = "clock.redhat.com"
         cfg["base_dns_domain"] = "redhat.com"
         cfg["sno"] = self._cc.is_sno()
-        if cfg["proxy"]:
+        if self._cc["proxy"]:
             cfg["proxy"] = self._cc["proxy"]
         if cfg["noproxy"]:
             cfg["noproxy"] = self._cc["noproxy"]
@@ -589,7 +589,7 @@ class ClusterDeployer:
         cfg["pull_secret"] = self._secrets_path
         cfg["cpu_architecture"] = "x86_64"
         cfg["openshift_version"] = self._cc["version"]
-        if cfg["proxy"]:
+        if self._cc["proxy"]:
             cfg["proxy"] = self._cc["proxy"]
         if cfg["noproxy"]:
             cfg["noproxy"] = self._cc["noproxy"]
@@ -811,7 +811,7 @@ class ClusterDeployer:
         cfg["pull_secret"] = self._secrets_path
         cfg["cpu_architecture"] = "x86_64"
         cfg["openshift_version"] = self._cc["version"]
-        if cfg["proxy"]:
+        if self._cc["proxy"]:
             cfg["proxy"] = self._cc["proxy"]
         if cfg["noproxy"]:
             cfg["noproxy"] = self._cc["noproxy"]
@@ -926,7 +926,7 @@ class ClusterDeployer:
         cfg["pull_secret"] = self._secrets_path
         cfg["cpu_architecture"] = "arm64"
         cfg["openshift_version"] = self._cc["version"]
-        if cfg["proxy"]:
+        if self._cc["proxy"]:
             cfg["proxy"] = self._cc["proxy"]
         if cfg["noproxy"]:
             cfg["noproxy"] = self._cc["noproxy"]
