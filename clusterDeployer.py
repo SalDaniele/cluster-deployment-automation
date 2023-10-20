@@ -570,7 +570,7 @@ class ClusterDeployer:
         cfg["sno"] = self._cc.is_sno()
         if self._cc["proxy"]:
             cfg["proxy"] = self._cc["proxy"]
-        if cfg["noproxy"]:
+        if self._cc["noproxy"]:
             cfg["noproxy"] = self._cc["noproxy"]
 
         logger.info("Creating cluster")
@@ -591,7 +591,7 @@ class ClusterDeployer:
         cfg["openshift_version"] = self._cc["version"]
         if self._cc["proxy"]:
             cfg["proxy"] = self._cc["proxy"]
-        if cfg["noproxy"]:
+        if self._cc["noproxy"]:
             cfg["noproxy"] = self._cc["noproxy"]
         self._ai.ensure_infraenv_created(infra_env, cfg)
         self._ai.download_iso_with_retry(infra_env)
@@ -813,7 +813,7 @@ class ClusterDeployer:
         cfg["openshift_version"] = self._cc["version"]
         if self._cc["proxy"]:
             cfg["proxy"] = self._cc["proxy"]
-        if cfg["noproxy"]:
+        if self._cc["noproxy"]:
             cfg["noproxy"] = self._cc["noproxy"]
 
         self._ai.ensure_infraenv_created(infra_env_name, cfg)
@@ -928,7 +928,7 @@ class ClusterDeployer:
         cfg["openshift_version"] = self._cc["version"]
         if self._cc["proxy"]:
             cfg["proxy"] = self._cc["proxy"]
-        if cfg["noproxy"]:
+        if self._cc["noproxy"]:
             cfg["noproxy"] = self._cc["noproxy"]
 
         self._ai.ensure_infraenv_created(infra_env_name, cfg)
