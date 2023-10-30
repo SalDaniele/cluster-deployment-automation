@@ -368,7 +368,12 @@ class ClusterDeployer:
                 h = host.Host(m["name"])
                 if m["name"] != "localhost":
                     host_config = self.local_host_config(m["name"])
-                    h.ssh_connect(host_config["username"], host_config["password"])
+                    try:
+                        h.ssh_connect(host_config["username"], host_config["password"])
+                    except paramiko.ssh_exception.AuthenticationException as e:
+                        logger.info(f"Failed to connect to {m['name']} at {host_config['username']}")
+                        h.ssh_connect("root")
+
                     if not host_config['pre_installed']:
                         h.need_sudo()
 
