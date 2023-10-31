@@ -103,20 +103,21 @@ def install_custom_kernel(lh, client, bf_names, ips):
 def run_dpu_network_operator_git(lh, kc):
     repo_dir = "/root/dpu-network-operator"
     # url = "https://github.com/openshift/dpu-network-operator.git"
-    url = "https://github.com/bn222/dpu-network-operator"
+    # url = "https://github.com/bn222/dpu-network-operator"
+    url = "https://github.com/wizhaoredhat/dpu-network-operator.git"
 
     if os.path.exists(repo_dir):
         logger.info(f"Repo exists at {repo_dir}, deleting it")
         shutil.rmtree(repo_dir)
     logger.info(f"Cloning repo to {repo_dir}")
-    Repo.clone_from(url, repo_dir, branch='tenant-mode')
+    Repo.clone_from(url, repo_dir, branch='dpu_ovn_ic_changes')
 
     cur_dir = os.getcwd()
     os.chdir(repo_dir)
     lh.run("rm -rf bin")
     env = os.environ.copy()
     env["KUBECONFIG"] = kc
-    env["IMG"] = "quay.io/bnemeth/dpu-network-operator:142"
+    env["IMG"] = "quay.io/wizhao/dpu-network-operator:Oct18_WZ_DPU_DS_Test_1"
     # cleanup first, to make this script idempotent
     logger.info("running make undeploy")
     logger.info(lh.run("make undeploy", env=env))
