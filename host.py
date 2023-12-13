@@ -313,7 +313,7 @@ class Host:
 
     """
 
-    @retry(stop=stop_after_attempt(10), wait=wait_fixed(60))
+    @retry(stop=stop_after_attempt(20), wait=wait_fixed(60))
     def _boot_with_overrides(self, iso_path: str) -> None:
         assert ":" in iso_path
         logger.info(f"Trying to boot '{self._hostname}' through {self._bmc_url()} using {iso_path}")

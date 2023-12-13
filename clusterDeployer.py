@@ -717,6 +717,7 @@ class ClusterDeployer:
 
         for w in nodes:
             w["ip"] = socket.gethostbyname(w["node"])
+            logger.info(f"DEBUG: w[ip] = {w['ip']} node = {w['node']}")
 
     def _create_vm_x86_workers(self) -> None:
         cluster_name = self._cc["name"]
@@ -852,6 +853,7 @@ class ClusterDeployer:
             hosts.append(rh)
         subnet = "192.168.122.0/24"
         logger.info(f"Connectivity established to all workers; checking that they have an IP in {subnet}")
+        time.sleep(60)
 
         def addresses(h):
             ret = []
