@@ -6,6 +6,7 @@ instructions below make the assumption that everything is run as root
 from the repository root directory.
 
 new feature
+My other new feature
 
 ## Generate a ssh key
 NOTE: starting with Fedora 33 RSA keys are considered not secure enough; use
