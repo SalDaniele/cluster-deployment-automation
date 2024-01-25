@@ -5,6 +5,8 @@ steps assume a RHEL/Fedora based distribution is used.  Also, the
 instructions below make the assumption that everything is run as root
 from the repository root directory.
 
+new feature
+
 ## Generate a ssh key
 NOTE: starting with Fedora 33 RSA keys are considered not secure enough; use
 ed25519 instead.
