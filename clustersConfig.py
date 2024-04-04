@@ -142,6 +142,7 @@ class ClustersConfig:
     postconfig: List[ExtraConfigArgs] = []
     ntp_source: str = "clock.redhat.com"
     base_dns_domain: str = "redhat.com"
+    install_iso: str = ""
 
     # All configurations that used to be supported but are not anymore.
     # Used to warn the user to change their config.
@@ -178,6 +179,8 @@ class ClustersConfig:
             self.version = cc["version"]
         if "kind" in cc:
             self.kind = cc["kind"]
+            if self.kind == "iso":
+                self.install_iso = cc["install_iso"]
         if "network_api_port" in cc:
             self.network_api_port = cc["network_api_port"]
         self.name = cc["name"]
@@ -363,7 +366,7 @@ class ClustersConfig:
         return [x for x in self.worker_vms() if x.node == "localhost"]
 
     def is_sno(self) -> bool:
-        return len(self.masters) == 1 and len(self.workers) == 0
+        return len(self.masters) == 1 and len(self.workers) == 0 and self.kind == "openshift"
 
 
 def main() -> None:

@@ -25,6 +25,7 @@ from logger import logger
 import microshift
 from extraConfigRunner import ExtraConfigRunner
 from clusterHost import ClusterHost
+import isoCluster
 
 
 def match_to_proper_version_format(version_cluster_config: str) -> str:
@@ -191,7 +192,7 @@ class ClusterDeployer:
             else:
                 logger.info("Skipping pre configuration.")
 
-            if self._cc.kind != "microshift":
+            if self._cc.kind == "openshift":
                 if "masters" in self.steps:
                     self.teardown()
                     self.create_cluster()
@@ -211,7 +212,12 @@ class ClusterDeployer:
                 microshift.deploy(self._cc.fullConfig["name"], self._cc.masters[0], self._cc.external_port, version)
             else:
                 logger.error_and_exit("Masters must be of length one for deploying microshift")
-
+        if self._cc.kind == "iso":
+            if len(self._cc.masters) == 1:
+                self.deploy_cluster_from_iso()
+            else:
+                logger.error("Masters must be of length one for deploying from iso")
+                sys.exit(-1)
         if "post" in self.steps:
             self._postconfig()
         else:
@@ -222,6 +228,9 @@ class ClusterDeployer:
             logger.info("Setting up a Single Node OpenShift (SNO) environment")
             if self._cc.masters[0].ip is None:
                 logger.error_and_exit("Missing ip on master")
+
+        if self._cc.kind == "iso":
+            return
 
         min_cores = 28
         cc = int(self._local_host.hostconn.run("nproc").out)
@@ -599,3 +608,16 @@ class ClusterDeployer:
                     logger.info(e)
 
             time.sleep(30)
+
+    def deploy_cluster_from_iso(self) -> None:
+        master = self._cc.masters[0]
+        if master.mac is None:
+            logger.error_and_exit(f"No MAC address provided for cluster {self._cc.name}, exiting")
+        if master.ip is None:
+            logger.error_and_exit(f"No IP address provided for cluster {self._cc.name}, exiting")
+        if master.name is None:
+            logger.error_and_exit(f"No name provided for cluster {self._cc.name}, exiting")
+        if not self._cc.network_api_port or self._cc.network_api_port == "auto":
+            logger.error_and_exit(f"Network API port with connection to {self._cc.name} must be specified, exiting")
+
+        isoCluster.IPUIsoBoot(self._cc, master, self._cc.install_iso)
