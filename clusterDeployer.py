@@ -212,7 +212,7 @@ class ClusterDeployer:
                 microshift.deploy(self._cc.fullConfig["name"], self._cc.masters[0], self._cc.external_port, version)
             else:
                 logger.error_and_exit("Masters must be of length one for deploying microshift")
-        if self._cc.kind == "iso":
+        if self._cc.kind == "iso" and "masters" in self.steps:
             if len(self._cc.masters) == 1:
                 self.deploy_cluster_from_iso()
             else:

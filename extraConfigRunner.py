@@ -8,6 +8,7 @@ from extraConfigCNO import ExtraConfigCNO
 from extraConfigRT import ExtraConfigRT
 from extraConfigDualStack import ExtraConfigDualStack
 from extraConfigCX import ExtraConfigCX
+from extraConfigIpuMicroshift import ExtraConfigIpuMicroshift
 from clustersConfig import ClustersConfig
 from clustersConfig import ExtraConfigArgs
 from concurrent.futures import Future
@@ -38,6 +39,7 @@ class ExtraConfigRunner:
             "rt": ExtraConfigRT,
             "dualstack": ExtraConfigDualStack,
             "cx_firmware": ExtraConfigCX,
+            "start_microshift": ExtraConfigIpuMicroshift,
         }
 
     def run(self, to_run: ExtraConfigArgs, futures: Dict[str, Future[Optional[host.Result]]]) -> None:
