@@ -265,7 +265,9 @@ class Host:
         return None
 
     def remove(self, source: str) -> None:
+        logger.info(f"###### {self._hostname} wants thread for remove")
         with self._host_mutex:
+            logger.info(f"###### {self._hostname} took thread for remove")
             if self.is_localhost():
                 if os.path.exists(source):
                     os.remove(source)
@@ -276,10 +278,13 @@ class Host:
                     sftp.remove(source)
                 except FileNotFoundError:
                     pass
+        logger.info(f"###### {self._hostname} returned thread for remove")
 
     # Copying local_file to "Host", which can be local or remote
     def copy_to(self, src_file: str, dst_file: str) -> None:
+        logger.info(f"###### {self._hostname} wants thread for copy_to")
         with self._host_mutex:
+            logger.info(f"###### {self._hostname} took thread for copy_to")
             if not os.path.exists(src_file):
                 raise FileNotFoundError(2, f"No such file or dir: {src_file}")
             if self.is_localhost():
@@ -294,22 +299,36 @@ class Host:
                         logger.info(e)
                         logger.info("Disconnected during sftpd, reconnecting...")
                         self.ssh_connect_looped(self._logins)
+        logger.info(f"###### {self._hostname} returned thread for copy_to")
 
     def need_sudo(self) -> None:
         self.sudo_needed = True
 
-    def run(self, cmd: str, log_level: int = logging.DEBUG, env: dict[str, str] = os.environ.copy()) -> Result:
-        with self._host_mutex:
-            if self.sudo_needed:
-                cmd = "sudo " + cmd
+    def run(self, cmd: str, log_level: int = logging.DEBUG, env: dict[str, str] = os.environ.copy(), thread_safe: bool = True) -> Result:
+        if thread_safe:
+            logger.info(f"###### {self._hostname} wants thread to run {cmd}")
+            with self._host_mutex:
+                logger.info(f"###### {self._hostname} took thread to run {cmd}")
+                ret_val = self._execute_run(cmd, log_level, env)
+                logger.info(f"###### {self._hostname} returned thread")
+        else:
+            logger.info(f"###### {self._hostname} running without lock: {cmd}")
+            ret_val = self._execute_run(cmd, log_level, env)
 
-            logger.log(log_level, f"running command {cmd} on {self._hostname}")
-            if self.is_localhost():
-                ret_val = self._run_local(cmd, env)
-            else:
-                ret_val = self._run_remote(cmd, log_level)
+        return ret_val
+    
+    def _execute_run(self, cmd: str, log_level: int = logging.DEBUG, env: dict[str, str] = os.environ.copy()):
+        if self.sudo_needed:
+            cmd = "sudo " + cmd
+        
+        logger.log(log_level, f"running command {cmd} on {self._hostname}")
+        if self.is_localhost():
+            ret_val = self._run_local(cmd, env)
+        else:
+            ret_val = self._run_remote(cmd, log_level)
 
-            logger.log(log_level, ret_val)
+        logger.log(log_level, ret_val)
+
         return ret_val
 
     def _run_local(self, cmd: str, env: dict[str, str]) -> Result:
@@ -440,7 +459,9 @@ class Host:
         return "NO-CARRIER" not in ports[port_name]["flags"]
 
     def write(self, fn: str, contents: str) -> None:
+        logger.info(f"###### {self._hostname} wants thread for write")
         with self._host_mutex:
+            logger.info(f"###### {self._hostname} took thread for write")
             if self.is_localhost():
                 with open(fn, "w") as f:
                     f.write(contents)
@@ -450,34 +471,48 @@ class Host:
                     tmp_file.write(contents.encode('utf-8'))
                 self.copy_to(tmp_filename, fn)
                 os.remove(tmp_filename)
+        logger.info(f"###### {self._hostname} returned thread for write")
 
     def read_file(self, file_name: str) -> str:
+        logger.info(f"###### {self._hostname} wants thread for read")
         with self._host_mutex:
+            logger.info(f"###### {self._hostname} took thread for read")
             if self.is_localhost():
                 with open(file_name) as f:
+                    logger.info(f"###### {self._hostname} returned thread for read")
                     return f.read()
             else:
                 ret = self.run(f"cat {file_name}")
                 if ret.returncode == 0:
+                    logger.info(f"###### {self._hostname} returned thread for read")
                     return ret.out
+                logger.info(f"###### {self._hostname} returned thread for read")
                 raise Exception(f"Error reading {file_name}")
 
     def listdir(self, path: Optional[str] = None) -> list[str]:
+        logger.info(f"###### {self._hostname} wants thread for listdir")
         with self._host_mutex:
+            logger.info(f"###### {self._hostname} took thread for listdir")
             if self.is_localhost():
+                logger.info(f"###### {self._hostname} returned thread for listdir")
                 return os.listdir(path)
             path = path if path is not None else ""
             ret = self.run(f"ls {path}")
             if ret.returncode == 0:
+                logger.info(f"###### {self._hostname} returned thread for listdir")
                 return ret.out.strip().split("\n")
+            logger.info(f"###### {self._hostname} returned thread for listdir")
             raise Exception(f"Error listing dir {path}")
 
     def hostname(self) -> str:
         return self._hostname
 
     def exists(self, path: str) -> bool:
+        logger.info(f"###### {self._hostname} wants thread for exists")
         with self._host_mutex:
+            logger.info(f"###### {self._hostname} took thread for exists")
             ret = self.run(f"stat {path}", logging.DEBUG).returncode == 0
+        logger.info(f"###### {self._hostname} returned thread for exists")
         return ret
 
 

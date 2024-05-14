@@ -155,7 +155,7 @@ class VmClusterNode(ClusterNode):
         """
 
         logger.info(f"Starting VM {self.config.name}")
-        ret = self.hostconn.run(cmd)
+        ret = self.hostconn.run(cmd, thread_safe=False)
         if ret.returncode != 0:
             logger.info(f"Finished starting VM {self.config.name}, cmd = {cmd}, ret = {ret}")
         else:
