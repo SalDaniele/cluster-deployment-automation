@@ -10,7 +10,7 @@ import shutil
 import sys
 import logging
 import tempfile
-from threading import Lock
+from threading import RLock
 from typing import Optional
 from typing import Union
 from typing import Any
@@ -210,7 +210,7 @@ class Host:
         self._bmc = bmc
         self._logins: list[Login] = []
         self.sudo_needed = False
-        self._host_mutex = Lock()
+        self._host_mutex = RLock()
 
     @lru_cache(maxsize=None)
     def is_localhost(self) -> bool:
