@@ -21,7 +21,7 @@ def main_deploy(args: argparse.Namespace) -> None:
     local_bridge.configure(api_port=None)
 
     # microshift does not use assisted installer so we don't need this check
-    if args.url == cc.ip_range[0] and not cc.kind == "microshift":
+    if args.url == cc.ip_range[0] and cc.kind == "openshift":
         ais = AssistedInstallerService(cc.version, args.url, cc.proxy, cc.noproxy)
         ais.start()
     else:

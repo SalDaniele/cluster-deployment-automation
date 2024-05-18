@@ -140,6 +140,7 @@ class ClustersConfig:
     postconfig: list[ExtraConfigArgs] = []
     ntp_source: str = "clock.redhat.com"
     base_dns_domain: str = "redhat.com"
+    install_iso: str = ""
 
     # All configurations that used to be supported but are not anymore.
     # Used to warn the user to change their config.
@@ -176,6 +177,8 @@ class ClustersConfig:
             self.version = cc["version"]
         if "kind" in cc:
             self.kind = cc["kind"]
+            if self.kind == "iso":
+                self.install_iso = cc["install_iso"]
         if "network_api_port" in cc:
             self.network_api_port = cc["network_api_port"]
         self.name = cc["name"]
@@ -307,7 +310,7 @@ class ClustersConfig:
             logger.error(f"Not all master/worker IPs are in the reserved cluster IP range ({self.ip_range}).  Other hosts in the network might be offered those IPs via DHCP.")
 
     def validate_external_port(self) -> bool:
-        return host.LocalHost().port_exists(self.external_port)
+        return bool(common.ip_links(host.LocalHost(), ifname=self.external_port))
 
     def _apply_jinja(self, contents: str, cluster_name: str) -> str:
         def worker_number(a: int) -> str:
@@ -387,7 +390,7 @@ class ClustersConfig:
         return [x for x in self.worker_vms() if x.node == "localhost"]
 
     def is_sno(self) -> bool:
-        return len(self.masters) == 1
+        return len(self.masters) == 1 and self.kind == "openshift"
 
 
 def main() -> None:

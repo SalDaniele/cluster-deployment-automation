@@ -24,6 +24,7 @@ from clusterHost import ClusterHost
 import dnsutil
 from virshPool import VirshPool
 from arguments import WORKERS_STEP, MASTERS_STEP, POST_STEP
+import isoCluster
 
 
 def match_to_proper_version_format(version_cluster_config: str) -> str:
@@ -201,7 +202,7 @@ class ClusterDeployer:
             else:
                 logger.info("Skipping pre configuration.")
 
-            if self._cc.kind != "microshift":
+            if self._cc.kind == "openshift":
                 if WORKERS_STEP in self.steps or MASTERS_STEP in self.steps:
                     self.teardown_workers()
                 if MASTERS_STEP in self.steps:
@@ -225,7 +226,12 @@ class ClusterDeployer:
                 microshift.deploy(self._cc.fullConfig["name"], self._cc.masters[0], self._cc.external_port, version)
             else:
                 logger.error_and_exit("Masters must be of length one for deploying microshift")
-
+        if self._cc.kind == "iso" and MASTERS_STEP in self.steps:
+            if len(self._cc.masters) == 1:
+                self.deploy_cluster_from_iso()
+            else:
+                logger.error("Masters must be of length one for deploying from iso")
+                sys.exit(-1)
         if POST_STEP in self.steps:
             self._postconfig()
             cmd = "apply -f manifests/monitoring-config.yaml"
@@ -238,6 +244,9 @@ class ClusterDeployer:
             logger.info("Setting up a Single Node OpenShift (SNO) environment")
             if self._cc.masters[0].ip is None:
                 logger.error_and_exit("Missing ip on master")
+
+        if self._cc.kind == "iso":
+            return
 
         min_cores = 28
         cc = int(self._local_host.hostconn.run("nproc").out)
@@ -478,22 +487,19 @@ class ClusterDeployer:
         ip_range = self._cc.full_ip_range
         logger.info(f"Connectivity established to all workers; checking that they have an IP in range: {ip_range}")
 
-        def addresses(h: host.Host) -> list[str]:
-            ret = []
-            for e in h.ipa():
-                if "addr_info" not in e:
-                    continue
-                for k in e["addr_info"]:
-                    if k["family"] == "inet":
-                        ret.append(k["local"])
-            return ret
-
-        def addr_ok(a: str) -> bool:
-            return common.ip_range_contains(ip_range, a)
+        def any_address_in_range(h: host.Host, ip_range: tuple[str, str]) -> bool:
+            for ipaddr in common.ip_addrs(h):
+                for ainfo in ipaddr.addr_info:
+                    if ainfo.family != "inet":
+                        continue
+                    if not common.ip_range_contains(ip_range, ainfo.local):
+                        continue
+                    return True
+            return False
 
         any_worker_bad = False
         for w, h in zip(workers, hosts):
-            if all(not addr_ok(a) for a in addresses(h)):
+            if not any_address_in_range(h, ip_range):
                 logger.error(f"Worker {w.config.name} doesn't have an IP in range {ip_range}.")
                 any_worker_bad = True
 
@@ -625,3 +631,16 @@ class ClusterDeployer:
                     logger.info(e)
 
             time.sleep(30)
+
+    def deploy_cluster_from_iso(self) -> None:
+        master = self._cc.masters[0]
+        if master.mac is None:
+            logger.error_and_exit(f"No MAC address provided for cluster {self._cc.name}, exiting")
+        if master.ip is None:
+            logger.error_and_exit(f"No IP address provided for cluster {self._cc.name}, exiting")
+        if master.name is None:
+            logger.error_and_exit(f"No name provided for cluster {self._cc.name}, exiting")
+        if not self._cc.network_api_port or self._cc.network_api_port == "auto":
+            logger.error_and_exit(f"Network API port with connection to {self._cc.name} must be specified, exiting")
+
+        isoCluster.IPUIsoBoot(self._cc, master, self._cc.install_iso)
