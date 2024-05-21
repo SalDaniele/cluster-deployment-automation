@@ -140,6 +140,7 @@ class ClustersConfig:
     postconfig: list[ExtraConfigArgs] = []
     ntp_source: str = "clock.redhat.com"
     base_dns_domain: str = "redhat.com"
+    install_iso: str = ""
 
     # All configurations that used to be supported but are not anymore.
     # Used to warn the user to change their config.
@@ -176,6 +177,8 @@ class ClustersConfig:
             self.version = cc["version"]
         if "kind" in cc:
             self.kind = cc["kind"]
+            if self.kind == "iso":
+                self.install_iso = cc["install_iso"]
         if "network_api_port" in cc:
             self.network_api_port = cc["network_api_port"]
         self.name = cc["name"]
@@ -198,6 +201,30 @@ class ClustersConfig:
         self.configured_workers = [NodeConfig(self.name, **w) for w in cc["workers"]]
         self.workers = [NodeConfig(self.name, **w) for w in worker_range.filter_list(cc["workers"])]
 
+        if self.kind == "openshift":
+            self.configure_ip_range()
+
+        # creates hosts entries for each referenced node name
+        node_names = {x["name"] for x in cc["hosts"]}
+        for node in self.all_nodes():
+            if node.node not in node_names:
+                cc["hosts"].append({"name": node.node})
+                node_names.add(node.node)
+
+        if not self.is_sno():
+            self.api_vip = {'ip': cc["api_vip"]}
+            self.ingress_vip = {'ip': cc["ingress_vip"]}
+
+        for e in cc["hosts"]:
+            self.hosts.append(HostConfig(self.network_api_port, **e))
+
+        for c in cc["preconfig"]:
+            self.preconfig.append(ExtraConfigArgs(**c))
+        for c in cc["postconfig"]:
+            self.postconfig.append(ExtraConfigArgs(**c))
+
+    def configure_ip_range(self) -> None:
+        cc = self.fullConfig
         # Reserve IPs for AI, masters and workers.
         ip_mask = cc["ip_mask"]
         ip_range = cc["ip_range"].split("-")
@@ -226,25 +253,6 @@ class ClustersConfig:
         dynamic_ip_range = common.ip_range(self.ip_range[1], common.ip_range_size(ip_range) - common.ip_range_size(self.ip_range))
         self.local_bridge_config = BridgeConfig(ip=self.ip_range[0], mask=ip_mask, dynamic_ip_range=dynamic_ip_range)
         self.remote_bridge_config = BridgeConfig(ip=ip_range[1], mask=ip_mask)
-
-        # creates hosts entries for each referenced node name
-        node_names = {x["name"] for x in cc["hosts"]}
-        for node in self.all_nodes():
-            if node.node not in node_names:
-                cc["hosts"].append({"name": node.node})
-                node_names.add(node.node)
-
-        if not self.is_sno():
-            self.api_vip = {'ip': cc["api_vip"]}
-            self.ingress_vip = {'ip': cc["ingress_vip"]}
-
-        for e in cc["hosts"]:
-            self.hosts.append(HostConfig(self.network_api_port, **e))
-
-        for c in cc["preconfig"]:
-            self.preconfig.append(ExtraConfigArgs(**c))
-        for c in cc["postconfig"]:
-            self.postconfig.append(ExtraConfigArgs(**c))
 
     def get_last_ip(self) -> str:
         hostconn = host.LocalHost()
@@ -387,7 +395,7 @@ class ClustersConfig:
         return [x for x in self.worker_vms() if x.node == "localhost"]
 
     def is_sno(self) -> bool:
-        return len(self.masters) == 1
+        return len(self.masters) == 1 and self.kind == "openshift"
 
 
 def main() -> None:
