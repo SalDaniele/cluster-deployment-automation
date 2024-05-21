@@ -15,6 +15,7 @@ from virtualBridge import VirBridge
 
 def main_deploy_openshift(cc: ClustersConfig, args: argparse.Namespace) -> None:
     # Make sure the local virtual bridge base configuration is correct.
+    assert(cc.local_bridge_config is not None)
     local_bridge = VirBridge(host.LocalHost(), cc.local_bridge_config)
     local_bridge.configure(api_port=None)
 
@@ -46,7 +47,7 @@ def main_deploy_openshift(cc: ClustersConfig, args: argparse.Namespace) -> None:
 
 
 def main_deploy_iso(cc: ClustersConfig, args: argparse.Namespace) -> None:
-    id = IsoDeployer(cc, args.steps)
+    id = IsoDeployer(cc, args.steps, args.secrets_path)
     id.deploy()
 
 

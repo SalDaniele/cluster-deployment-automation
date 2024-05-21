@@ -38,6 +38,7 @@ def match_to_proper_version_format(version_cluster_config: str) -> str:
 
 class ClusterDeployer:
     def __init__(self, cc: ClustersConfig, ai: AssistedClientAutomation, steps: list[str], secrets_path: str):
+    #def __init__(self, cc: ClustersConfig, steps: list[str], secrets_path: str, ai: Optional[AssistedClientAutomation]):
         self._client: Optional[K8sClient] = None
         self.steps = steps
         self._cc = cc
@@ -51,9 +52,10 @@ class ClusterDeployer:
 
         lh = host.LocalHost()
         lh_config = list(filter(lambda hc: hc.name == lh.hostname(), self._cc.hosts))[0]
-        self._local_host = ClusterHost(lh, lh_config, cc, cc.local_bridge_config)
-        self._remote_hosts = {bm.name: ClusterHost(host.RemoteHost(bm.name), bm, cc, cc.remote_bridge_config) for bm in self._cc.hosts if bm.name != lh.hostname()}
-        self._all_hosts = [self._local_host] + list(self._remote_hosts.values())
+        if cc.local_bridge_config and cc.remote_bridge_config:
+            self._local_host = ClusterHost(lh, lh_config, cc, cc.local_bridge_config)
+            self._remote_hosts = {bm.name: ClusterHost(host.RemoteHost(bm.name), bm, cc, cc.remote_bridge_config) for bm in self._cc.hosts if bm.name != lh.hostname()}
+            self._all_hosts = [self._local_host] + list(self._remote_hosts.values())
         self._futures = {k8s_node.config.name: k8s_node.future for h in self._all_hosts for k8s_node in h._k8s_nodes()}
         self._all_nodes = {k8s_node.config.name: k8s_node for h in self._all_hosts for k8s_node in h._k8s_nodes()}
 
@@ -106,6 +108,7 @@ class ClusterDeployer:
     """
 
     def teardown_masters(self) -> None:
+        assert(self._ai is not None)
         cluster_name = self._cc.name
         if MASTERS_STEP not in self.steps:
             logger.info(f"Not tearing down {cluster_name}")
@@ -624,12 +627,11 @@ class ClusterDeployer:
             time.sleep(30)
 
 
-class IsoDeployer:
-    def __init__(self, cc: ClustersConfig, steps: list[str]):
-        self.steps = steps
-        self._cc = cc
-        self._extra_config = ExtraConfigRunner(cc)
+class IsoDeployer(ClusterDeployer):
+    def __init__(self, cc: ClustersConfig, steps: list[str], secrets_path: str):
+        super().__init__(cc, AssistedClientAutomation(f"192.168.122.1:8090"), steps, secrets_path)
 
+    def _validate(self) -> None:
         if len(self._cc.masters) != 1:
             logger.error("Masters must be of length one for deploying from iso")
             sys.exit(-1)

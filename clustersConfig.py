@@ -129,8 +129,8 @@ class ClustersConfig:
     masters: list[NodeConfig] = []
     workers: list[NodeConfig] = []
     configured_workers: list[NodeConfig] = []
-    local_bridge_config: BridgeConfig
-    remote_bridge_config: BridgeConfig
+    local_bridge_config: Optional[BridgeConfig] = None
+    remote_bridge_config: Optional[BridgeConfig] = None
     full_ip_range: tuple[str, str]
     ip_range: tuple[str, str]
     hosts: list[HostConfig] = []
