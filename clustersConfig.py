@@ -51,6 +51,11 @@ class ExtraConfigArgs:
     # install.
     sriov_network_operator_local: bool = False
 
+    # https://console.redhat.com/insights/connector/activation-keys
+    organization_id: Optional[str] = None
+
+    activation_key: Optional[str] = None
+
     def pre_check(self) -> None:
         if self.sriov_network_operator_local:
             if self.name != "sriov_network_operator":
