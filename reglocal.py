@@ -107,6 +107,14 @@ def delete_all(rsh: host.Host) -> None:
     _delete_all(rsh, _dir_name(rsh))
 
 
+def local_trust(rsh: host.Host) -> None:
+    cert_dir = f"{_dir_name(rsh)}/certs"
+    files = os.listdir(cert_dir)
+    for file in files:
+        rsh.copy_to(f"{cert_dir}/{file}", f"/etc/pki/ca-trust/source/anchors/{file}")
+    rsh.run_or_die("update-ca-trust")
+
+
 def ocp_trust(client: k8sClient.K8sClient, dir_name: str, hostname: str, listen_port: int) -> None:
     cm_name = f"local-container-registry-{hostname}"
 
