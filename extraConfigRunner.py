@@ -11,6 +11,7 @@ from extraConfigDualStack import ExtraConfigDualStack
 from extraConfigCX import ExtraConfigCX
 from extraConfigMicroshift import ExtraConfigMicroshift
 from extraConfigRhSubscription import ExtraConfigRhSubscription
+from extraConfigDpu import ExtraConfigDpu, ExtraConfigDpuHost
 from clustersConfig import ClustersConfig
 from clustersConfig import ExtraConfigArgs
 from concurrent.futures import Future
@@ -44,6 +45,8 @@ class ExtraConfigRunner:
             "cx_firmware": ExtraConfigCX,
             "microshift": ExtraConfigMicroshift,
             "rh_subscription": ExtraConfigRhSubscription,
+            "dpu_operator_host": ExtraConfigDpuHost,
+            "dpu_operator_dpu": ExtraConfigDpu,
         }
 
     def run(self, to_run: ExtraConfigArgs, futures: dict[str, Future[Optional[host.Result]]]) -> None:
