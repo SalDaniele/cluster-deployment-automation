@@ -1,5 +1,6 @@
 from logger import logger
 import time
+import host
 from ailib import Redfish
 
 
@@ -68,23 +69,42 @@ class BMC:
 
     def boot_iso_with_retry(self, iso_path: str) -> None:
         logger.info(iso_path)
+        # Trying to boot https://10.26.16.116/redfish/v1/Systems/System.Embedded.1 using 10.26.16.68:/home/ptlcluster_guests_images/ptlcluster-x86_64.iso
         logger.info(f"Trying to boot {self.url} using {iso_path}")
-        red = self._redfish()
+        #red = self._redfish()
+        lh = host.LocalHost()
+        bmc = "10.26.16.116"
         try:
-            red.eject_iso()
+            #red.eject_iso()
+            logger.info("Ejecting Media")
+            cmd = f"curl -ku {self.user}:{self.password} -X POST 'https://{bmc}/redfish/v1/Managers/bmc/VirtualMedia/2/Actions/VirtualMedia.EjectMedia' -d '{{\"Inserted\": \"False\"}}'"
+            ret = lh.run(cmd)
+            logger.info(ret)
         except Exception as e:
             logger.info(e)
             logger.info("eject failed, but continuing")
         logger.info(f"inserting iso {iso_path}")
-        red.insert_iso(iso_path)
+        #red.insert_iso(iso_path)
+        logger.info("Inserting Media")
+        cmd = f"curl -ku {self.user}:{self.password} -X POST 'https://{bmc}/redfish/v1/Managers/bmc/VirtualMedia/2/Actions/VirtualMedia.InsertMedia' -d \"{{'Image': 'nfs://10.26.16.68:/home/ptlcluster_guests_images/ptlcluster-x86_64.iso', 'TransferProtocolType': 'NFS'}}\""
+        ret = lh.run(cmd)
+        logger.info(ret)
         try:
-            red.set_iso_once()
+            #red.set_iso_once()
+            logger.info("Setting boot source")
+            cmd = f"curl -ku {self.user}:{self.password} -X PATCH 'https://{bmc}/redfish/v1/Systems/system' -d '{{\"Boot\": {{\"BootSourceOverrideEnabled\": \"Once\", \"BootSourceOverrideMode\": \"UEFI\",\"BootSourceOverrideTarget\": \"Cd\" }}}}'"
+            ret = lh.run(cmd)
+            logger.info(ret)
         except Exception as e:
             logger.info(e)
             raise e
 
-        logger.info("setting to boot from iso")
-        red.restart()
+        #logger.info("setting to boot from iso")
+        #red.restart()
+        logger.info("restarting")
+        cmd = f"curl -ku {self.user}:{self.password} -X POST 'https://{bmc}/redfish/v1/Systems/system/Actions/ComputerSystem.Reset' -d '{{\"ResetType\": \"GracefulRestart\"}}'  "
+        ret = lh.run(cmd)
+        logger.info(ret)
         time.sleep(10)
         logger.info(f"Finished sending boot to {self.url}")
 
